@@ -124,3 +124,43 @@ class TestAccountService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
     # ADD YOUR TEST CASES HERE ...
+
+    def test_get_account(self):
+        """Deve ler uma conta individual"""
+        account = self._create_accounts(1)[0] # Cria uma conta de teste
+        resp = self.client.get(f"{BASE_URL}/{account.id}")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data["name"], account.name)
+
+    def test_get_account_not_found(self):
+        """Deve retornar 404 se a conta não existir"""
+        resp = self.client.get(f"{BASE_URL}/0")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_get_account_list(self):
+        """Deve listar todas as contas"""
+        self._create_accounts(5)
+        resp = self.client.get(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 5)
+
+    def test_update_account(self):
+        """Deve atualizar uma conta existente"""
+        # Cria uma conta
+        test_account = self._create_accounts(1)[0]
+        new_account = test_account.serialize()
+        new_account["name"] = "Nome Alterado"
+        
+        # Faz o Update
+        resp = self.client.put(f"{BASE_URL}/{test_account.id}", json=new_account)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        updated_account = resp.get_json()
+        self.assertEqual(updated_account["name"], "Nome Alterado")
+
+    def test_delete_account(self):
+        """Deve deletar uma conta"""
+        account = self._create_accounts(1)[0]
+        resp = self.client.delete(f"{BASE_URL}/{account.id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
